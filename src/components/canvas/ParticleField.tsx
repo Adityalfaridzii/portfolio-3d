@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { buildFormations, FORMATION_COUNT, rng } from "@/lib/formations";
 import { holdEase, measureAnchors, stageAt, weightAt, type Anchor } from "@/lib/stage";
 import { metrics, milestones, timelineRange } from "@/content/profile";
+import { NARROW_OPACITY, OPACITY, WIDE_MIN_PX, WIDE_OFFSET } from "@/lib/stageLayout";
 
 const vertexShader = /* glsl */ `
   uniform float uTime;
@@ -69,29 +70,15 @@ const fragmentShader = /* glsl */ `
   varying float vSeed;
 
   void main() {
+    // Bright core plus an exponential halo: the glow lives here instead of a
+    // full-screen bloom pass, which costs a render target every frame.
     float d = length(gl_PointCoord - 0.5);
-    float a = smoothstep(0.5, 0.05, d);
+    float a = smoothstep(0.5, 0.12, d) * 0.8 + exp(-d * 11.0) * 0.55;
     if (a < 0.01) discard;
     gl_FragColor = vec4(mix(uColorA, uColorB, vSeed), a * uOpacity);
     #include <colorspace_fragment>
   }
 `;
-
-// Where each formation sits on wide screens: the text owns the left half.
-// Anything that carries meaning (bars, timeline) must never sit under text.
-const WIDE_OFFSET: readonly (readonly [number, number])[] = [
-  [3.0, 0.15], // chaos: behind the portrait
-  [0, 0], // lattice: a floor under the cards
-  [3.2, 0.1], // bars: right of the metric list
-  [3.3, 0], // orbit: right of the toolbelt
-  [3.4, 0], // timeline: right of the job list
-  [0, -0.15], // converge: behind the contact panel
-];
-// Timeline is low: thousands of points on one thin line saturate under additive blending.
-const OPACITY = [0.9, 0.55, 0.95, 0.8, 0.42, 0.75] as const;
-// Narrow screens have no free half: every formation sits under text, so it
-// drops to ambient. Readability beats spectacle.
-const NARROW_OPACITY = 0.2;
 
 const barSpecs = metrics.map((m) => ({
   value: m.value,
@@ -103,7 +90,7 @@ export function ParticleField({ count }: { count: number }) {
   const group = useRef<THREE.Group>(null);
   const anchors = useRef<Anchor[]>([]);
   const stage = useRef(0);
-  const wide = useThree((s) => s.size.width >= 900);
+  const wide = useThree((s) => s.size.width >= WIDE_MIN_PX);
 
   const geometry = useMemo(() => {
     const formations = buildFormations(count, {
@@ -127,7 +114,7 @@ export function ParticleField({ count }: { count: number }) {
     () => ({
       uTime: { value: 0 },
       uStage: { value: 0 },
-      uSize: { value: 30 },
+      uSize: { value: 38 },
       uPixelRatio: { value: 1 },
       uOpacity: { value: 1 },
       uColorA: { value: new THREE.Color("#6ee7f9") },

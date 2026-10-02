@@ -45,3 +45,11 @@ next-env.d.ts
 
 # local scratch output
 /.tmp/
+
+# test output
+/playwright-report/
+/test-results/
+/blob-report/
+
+# private values for the privacy test (never commit: it would publish them)
+/tests/private.local.json

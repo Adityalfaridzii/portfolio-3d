@@ -3,21 +3,20 @@
 import { useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { PerformanceMonitor } from "@react-three/drei";
-import { Bloom, EffectComposer, Noise, Vignette } from "@react-three/postprocessing";
 import { ParticleField } from "./ParticleField";
 
 export type Tier = "high" | "low";
 
+// No post-processing: glow is in the particle shader, vignette and grain are
+// CSS (see .backdrop::after). Saves a full-screen pass every frame and ~24 KB gz.
 const TIERS = {
-  high: { count: 14000, dpr: [1, 2] as const, startDpr: 1.5, effects: true },
-  low: { count: 5000, dpr: [1, 1.5] as const, startDpr: 1, effects: false },
+  high: { count: 14000, dpr: [1, 2] as const, startDpr: 1.5 },
+  low: { count: 5000, dpr: [1, 1.5] as const, startDpr: 1 },
 };
 
 export default function Scene({ tier }: { tier: Tier }) {
   const cfg = TIERS[tier];
   const [dpr, setDpr] = useState(cfg.startDpr);
-  // Drop post-processing for good if the device can't hold frame rate with it.
-  const [effects, setEffects] = useState(cfg.effects);
 
   return (
     <Canvas
@@ -29,17 +28,9 @@ export default function Scene({ tier }: { tier: Tier }) {
       <PerformanceMonitor
         onIncline={() => setDpr(cfg.dpr[1])}
         onDecline={() => setDpr(cfg.dpr[0])}
-        onFallback={() => setEffects(false)}
         flipflops={3}
       />
       <ParticleField count={cfg.count} />
-      {effects && (
-        <EffectComposer multisampling={0}>
-          <Bloom intensity={0.75} luminanceThreshold={0.12} luminanceSmoothing={0.4} mipmapBlur />
-          <Noise opacity={0.035} />
-          <Vignette offset={0.28} darkness={0.7} />
-        </EffectComposer>
-      )}
     </Canvas>
   );
 }

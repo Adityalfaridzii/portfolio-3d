@@ -69,6 +69,18 @@ body {
   animation: fade-in 1.4s ease-out both;
 }
 
+/* Vignette + film grain over every mode, including the static fallback.
+   Done in CSS instead of a post-processing pass: free on the GPU. */
+.backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 50% 45%, transparent 55%, rgb(0 0 0 / 0.55) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+  opacity: 1;
+}
+
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
