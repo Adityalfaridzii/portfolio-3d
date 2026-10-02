@@ -1,0 +1,14 @@
+# Never upload private working files, even on a CLI deploy from this folder.
+docs/
+tests/private.local.json
+*.pdf
+CV*
+PROFILE-INTAKE*
+CASE-STUDIES-DRAFT*
+.tmp/
+test-results/
+playwright-report/
+
+# tokens written by the Vercel CLI
+.env*
+.vercel/

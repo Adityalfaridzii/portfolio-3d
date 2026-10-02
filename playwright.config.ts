@@ -1,7 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 3000;
-const baseURL = `http://localhost:${PORT}`;
+// BASE_URL=https://… runs the suite against a deployed site instead of a local server.
+const remote = process.env.BASE_URL;
+const baseURL = remote ?? `http://localhost:${PORT}`;
 
 // Headless Chromium has no GPU: SwiftShader gives it a software WebGL so the
 // 3D path is exercised, not just the fallback.
@@ -42,11 +44,13 @@ export default defineConfig({
       use: { ...devices["Pixel 7"], ...webgl },
     },
   ],
-  webServer: {
-    // CI tests the production build; locally, reuse a running dev server.
-    command: process.env.CI ? "npm run build && npm run start" : "npm run dev",
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
-  },
+  webServer: remote
+    ? undefined
+    : {
+        // CI tests the production build; locally, reuse a running dev server.
+        command: process.env.CI ? "npm run build && npm run start" : "npm run dev",
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 180_000,
+      },
 });

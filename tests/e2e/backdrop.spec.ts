@@ -1,12 +1,42 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 // The 3D layer is progressive enhancement. These tests pin down who gets it.
 
+/**
+ * Pins the hardware the page sees. Without this, the tier depends on the
+ * machine running the tests: GitHub's 4-vCPU runners correctly got "low"
+ * while a dev laptop got "high", and the same test passed locally and failed in CI.
+ */
+async function pretendHardware(page: Page, cores: number, memoryGb: number) {
+  await page.addInitScript(
+    ([c, m]) => {
+      Object.defineProperty(Navigator.prototype, "hardwareConcurrency", { get: () => c });
+      Object.defineProperty(Navigator.prototype, "deviceMemory", { get: () => m });
+    },
+    [cores, memoryGb],
+  );
+}
+
 test("capable desktop gets the full scene", async ({ page, isMobile }) => {
   test.skip(isMobile, "desktop-only expectation");
+  await pretendHardware(page, 8, 8);
   await page.goto("/");
   await expect(page.locator(".backdrop")).toHaveAttribute("data-mode", "high");
   await expect(page.locator(".backdrop canvas")).toBeVisible();
+});
+
+test("a 4-core desktop gets the light tier", async ({ page, isMobile }) => {
+  test.skip(isMobile, "desktop-only expectation");
+  await pretendHardware(page, 4, 8);
+  await page.goto("/");
+  await expect(page.locator(".backdrop")).toHaveAttribute("data-mode", "low");
+});
+
+test("a 4 GB desktop gets the light tier", async ({ page, isMobile }) => {
+  test.skip(isMobile, "desktop-only expectation");
+  await pretendHardware(page, 8, 4);
+  await page.goto("/");
+  await expect(page.locator(".backdrop")).toHaveAttribute("data-mode", "low");
 });
 
 test("touch devices get the light tier", async ({ page, isMobile }) => {
