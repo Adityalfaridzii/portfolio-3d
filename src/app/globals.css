@@ -1,26 +1,120 @@
 @import "tailwindcss";
 
+/* The site is dark by design (a lit particle field reads only on black), so
+   there is one theme. Tokens still live here so components never hardcode hex. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #07090d;
+  --surface: #0c1017;
+  --line: rgb(255 255 255 / 0.09);
+  --fg: #e8ecf2;
+  --muted: #8b95a7;
+  --accent: #6ee7f9;
+  --violet: #a78bfa;
+  --pass: #4ade80;
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-violet: var(--violet);
+  --color-pass: var(--pass);
+  --font-sans: var(--font-display);
+  --font-mono: var(--font-code);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--ink);
 }
 
+/* No background on body: in-flow block backgrounds paint above z-index:-1
+   layers, so a body background would hide the fixed 3D backdrop. */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--fg);
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ---------- backdrop ---------- */
+
+/* Static layer is always painted first: it is the whole background for
+   reduced-motion / no-WebGL visitors, and what everyone sees while 3D loads. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 75% 30%, color-mix(in srgb, var(--violet) 18%, transparent), transparent 70%),
+    radial-gradient(50% 40% at 20% 80%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%),
+    var(--ink);
+}
+
+.backdrop-canvas {
+  position: absolute;
+  inset: 0;
+  animation: fade-in 1.4s ease-out both;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------- shared pieces ---------- */
+
+.kicker {
+  font-family: var(--font-code), ui-monospace, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.panel {
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.chip {
+  font-family: var(--font-code), ui-monospace, monospace;
+  font-size: 0.72rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Fades the cutout's cropped waist into the page instead of a hard edge. */
+.portrait-fade {
+  mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -42,3 +42,6 @@ next-env.d.ts
 
 # private working docs: CV (phone + address), internal case-study analysis
 /docs/
+
+# local scratch output
+/.tmp/
