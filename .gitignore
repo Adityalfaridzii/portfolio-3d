@@ -53,3 +53,9 @@ next-env.d.ts
 
 # private values for the privacy test (never commit: it would publish them)
 /tests/private.local.json
+
+# defense in depth: a CV or intake doc must never be committed, wherever it lands
+*.pdf
+CV*
+PROFILE-INTAKE*
+CASE-STUDIES-DRAFT*
